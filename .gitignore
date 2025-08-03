@@ -1,0 +1,21 @@
+# .NET build artifacts
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+
+# User-specific files
+*.user
+*.suo
+
+# NuGet packages
+*.nupkg
+
+# Database volumes
+docker-data/
+
+# OS files
+.DS_Store
+Thumbs.db

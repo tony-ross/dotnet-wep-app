@@ -1,0 +1,27 @@
+{
+  "name": "dotnet8-postgres-dev",
+  "build": { "dockerfile": "Dockerfile" },
+  "features": {},
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash",
+    "dotnet.defaultSolution": "",
+    "dotnet.server.useOmnisharp": true,
+    "files.exclude": { "**/bin": true, "**/obj": true }
+  },
+  "extensions": [
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    "ms-azuretools.vscode-docker",
+    "formulahendry.dotnet-test-explorer",
+    "editorconfig.editorconfig"
+  ],
+  "remoteUser": "vscode",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached"
+  ],
+  "postCreateCommand": "dotnet --info && dotnet tool update --global dotnet-ef || dotnet tool install --global dotnet-ef",
+  "containerEnv": {
+    "PATH": "/home/vscode/.dotnet/tools:${PATH}"
+  },
+  "runServices": []
+}
