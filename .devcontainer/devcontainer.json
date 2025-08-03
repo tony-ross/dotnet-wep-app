@@ -1,5 +1,5 @@
 {
-  "name": "dotnet8-postgres-dev",
+  "name": "dotnet8-db2-dev",
   "build": { "dockerfile": "Dockerfile" },
   "features": {},
   "settings": {

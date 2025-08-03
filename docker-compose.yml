@@ -1,18 +1,21 @@
 services:
   db:
-    image: postgres:16
+    image: icr.io/db2_community/db2:11.5.9.0
+    platform: linux/amd64
+    privileged: true
     environment:
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
-      POSTGRES_DB: appdb
+      DB2INSTANCE: db2inst1
+      DB2INST1_PASSWORD: db2inst1
+      DBNAME: appdb
+      LICENSE: accept
     ports:
-      - "5432:5432"
+      - "50000:50000"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - db2data:/database
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d appdb"]
-      interval: 5s
-      timeout: 5s
+      test: ["CMD-SHELL", "su - db2inst1 -c 'db2 connect to appdb'>/dev/null && echo 'healthy' || echo 'not healthy'"]
+      interval: 30s
+      timeout: 10s
       retries: 10
 
   api:
@@ -24,12 +27,14 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://0.0.0.0:5187
-      ConnectionStrings__Default: Host=db;Port=5432;Database=appdb;Username=app;Password=app
+      DB2_USER: db2inst1
+      DB2_PASSWORD: db2inst1
+      ConnectionStrings__Default: Server=db:50000;Database=appdb;User ID=${DB2_USER};Password=${DB2_PASSWORD};persist security info=true;
     volumes:
       - ./src/Api:/src:cached
-    command: bash -c "dotnet tool install --global dotnet-ef && export PATH=\"$PATH:/root/.dotnet/tools\" && dotnet ef database update && dotnet run"
+    command: bash -c "dotnet restore && dotnet run --urls http://0.0.0.0:5187"
     ports:
       - "5187:5187"
 
 volumes:
-  pgdata:
+  db2data:

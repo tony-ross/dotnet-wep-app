@@ -1,11 +1,11 @@
-# .NET 8 Web API with PostgreSQL - Dev Container Setup
+# .NET 8 Web API with IBM DB2 - Dev Container Setup
 
-A production-ready development environment featuring .NET 8 Web API, Entity Framework Core with PostgreSQL, and VS Code Dev Containers for consistent development across teams.
+A development environment featuring .NET 8 Web API, Entity Framework Core with IBM DB2, and VS Code Dev Containers.
 
 ## Features
 
 - **.NET 8 Web API** with minimal APIs and Swagger/OpenAPI
-- **Entity Framework Core 8** with PostgreSQL support
+- **Entity Framework Core 8** with IBM DB2 support
 - **VS Code Dev Containers** for consistent development environment
 - **Docker Compose** for easy local development
 - **Hot reload** support for rapid development
@@ -38,14 +38,14 @@ A production-ready development environment featuring .NET 8 Web API, Entity Fram
 4. **Start Development**
 
    ```bash
-   # Start PostgreSQL database
+   # Start IBM DB2 database
    docker compose up db -d
 
-   # Apply database migrations
-   cd src/Api
-   dotnet ef database update
+   # Create database table (manual step for now)
+   # See Database Setup section below
 
    # Start API with hot reload
+   cd src/Api
    dotnet watch run
    ```
 
@@ -57,7 +57,25 @@ docker compose up --build
 
 # Access API
 # API: http://localhost:5187/swagger
-# PostgreSQL: localhost:5432
+# IBM DB2: localhost:50000
+```
+
+## Database Setup
+
+Since IBM DB2 requires manual table creation, run this SQL command to create the Todos table:
+
+```sql
+CREATE TABLE Todos (
+    Id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    Title VARCHAR(255) NOT NULL,
+    IsDone SMALLINT DEFAULT 0
+);
+```
+
+Execute this in the DB2 container:
+
+```bash
+docker exec -it dotnet-wep-app-db-1 bash -c "su - db2inst1 -c \"db2 connect to appdb; db2 'CREATE TABLE Todos (Id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, Title VARCHAR(255) NOT NULL, IsDone SMALLINT DEFAULT 0)'; db2 disconnect appdb\""
 ```
 
 ## Development Workflow
@@ -77,15 +95,9 @@ open http://localhost:5187/swagger
 ### Database Changes
 
 ```bash
-# Create new migration
-cd src/Api
-dotnet ef migrations add AddNewFeature
-
-# Apply migrations
-dotnet ef database update
-
-# Remove last migration
-dotnet ef migrations remove
+# For IBM DB2 schema changes, use direct SQL
+# Example: Add new column
+# docker exec -it dotnet-wep-app-db-1 bash -c "su - db2inst1 -c \"db2 connect to appdb; db2 'ALTER TABLE Todos ADD COLUMN Description VARCHAR(500)'; db2 disconnect appdb\""
 ```
 
 ### API Endpoints
@@ -104,7 +116,7 @@ dotnet ef migrations remove
 # Create a todo
 curl -X POST http://localhost:5187/api/todos \
   -H "Content-Type: application/json" \
-  -d '{"title": "Learn Dev Containers", "isDone": false}'
+  -d '{"title": "Learn IBM DB2 with EF Core", "isDone": false}'
 
 # Get all todos
 curl http://localhost:5187/api/todos
@@ -123,6 +135,8 @@ curl http://localhost:5187/api/todos
 │       ├── Program.cs     # API endpoints
 │       └── appsettings*.json
 ├── docker-compose.yml     # Service orchestration
+├── .gitignore            # Git ignore rules
+├── CLAUDE.md             # Claude Code instructions
 └── README.md
 ```
 
@@ -133,22 +147,23 @@ curl http://localhost:5187/api/todos
 **Docker Compose (Default)**
 
 ```
-Host=db;Port=5432;Database=appdb;Username=app;Password=app
+Server=db:50000;Database=appdb;User ID=db2inst1;Password=db2inst1;persist security info=true;
 ```
 
 **Local Development**
 
 ```
-Host=localhost;Port=5432;Database=appdb;Username=app;Password=app
+Server=localhost:50000;Database=appdb;User ID=db2inst1;Password=db2inst1;persist security info=true;
 ```
 
 ### Environment Variables
 
-| Variable                     | Description           | Default             |
-| ---------------------------- | --------------------- | ------------------- |
-| `ASPNETCORE_ENVIRONMENT`     | Environment           | Development         |
-| `ASPNETCORE_URLS`            | API URL               | http://0.0.0.0:5187 |
-| `ConnectionStrings__Default` | PostgreSQL connection | See above           |
+| Variable                 | Description  | Default             |
+| ------------------------ | ------------ | ------------------- |
+| `ASPNETCORE_ENVIRONMENT` | Environment  | Development         |
+| `ASPNETCORE_URLS`        | API URL      | http://0.0.0.0:5187 |
+| `DB2_USER`               | DB2 username | db2inst1            |
+| `DB2_PASSWORD`           | DB2 password | db2inst1            |
 
 ## Troubleshooting
 
@@ -177,14 +192,15 @@ Host=localhost;Port=5432;Database=appdb;Username=app;Password=app
    docker compose up --build
    ```
 
-3. **Migration issues**
+3. **IBM EntityFrameworkCore issues**
+
    ```bash
-   # Reset migrations
+   # Check package versions
    cd src/Api
-   dotnet ef database drop --force
-   dotnet ef migrations remove
-   dotnet ef migrations add InitialCreate
-   dotnet ef database update
+   dotnet list package
+
+   # Restore packages
+   dotnet restore
    ```
 
 ### Performance Tips
@@ -211,7 +227,7 @@ docker compose down --rmi all
 1. Fork the repository
 2. Create a feature branch
 3. Make changes in Dev Container
-4. Test with `dotnet test` (when tests are added)
+4. Test with `dotnet build` and manual testing
 5. Create pull request
 
 ## License

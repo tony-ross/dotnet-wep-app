@@ -1,17 +1,18 @@
 using Api.Data;
 using Api.Models;
 using Microsoft.EntityFrameworkCore;
+using IBM.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Connection string from environment or appsettings
 var cs = builder.Configuration.GetConnectionString("Default")
          ?? builder.Configuration["ConnectionStrings:Default"]
-         ?? "Host=localhost;Port=5432;Database=appdb;Username=app;Password=app";
+         ?? "Server=localhost:50000;Database=appdb;User ID=db2inst1;Password=db2inst1;persist security info=true;";
 
-// EF Core with Npgsql
+// EF Core with DB2 using basic configuration
 builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(cs));
+    opt.UseDb2(cs, b => { }));
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -19,12 +20,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Apply pending migrations at startup (optional for dev)
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.MigrateAsync();
-}
 
 if (app.Environment.IsDevelopment())
 {
